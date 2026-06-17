@@ -1,0 +1,247 @@
+================================================================================
+                    2026 CVM 微架构性能测评 学习记录
+================================================================================
+
+姓名：ljj
+GitHub：Kujie-Hub
+环境：VMware Ubuntu 22.04.5
+日期：2026年6月17日
+
+
+================================================================================
+一、实验环境搭建
+================================================================================
+
+【遇到的困难】
+1. Ubuntu虚拟机网络不通
+   - 问题描述：apt update 报错 "Temporary failure resolving"
+   - ping 8.8.8.8 显示 "Network is unreachable"
+   - 排查过程：检查VMware网络模式（NAT/桥接），检查VMware NAT服务
+
+2. VMware Tools安装
+   - 问题：主机与虚拟机之间无法复制粘贴
+   - 解决：安装 open-vm-tools
+
+3. perf权限问题
+   - 问题：perf stat 显示 "<not supported>"，硬件PMU事件不可用
+   - 原因：VMware虚拟化环境限制
+   - 解决方案：使用 tracepoint 事件替代硬件事件
+
+【与AI沟通要点】
+- AI提供了网络配置的逐步排查方法
+- AI建议将网络模式从桥接改为NAT
+- AI指导配置静态IP（192.168.91.100/24）
+- AI解释了perf在虚拟机中的限制及替代方案
+
+【学到的新知识】
+1. VMware网络模式：
+   - NAT模式：虚拟机通过宿主机共享上网
+   - 桥接模式：虚拟机独立IP
+   - VMnet8是NAT模式的虚拟网卡
+
+2. Linux网络配置：
+   - netplan配置文件：/etc/netplan/01-netcfg.yaml
+   - 静态IP配置格式
+   - ip addr show 查看网络接口
+
+3. perf工具：
+   - 硬件PMU事件在虚拟机中可能不可用
+   - tracepoint事件可以替代：kmem、sched、syscalls
+   - perf record 调用栈采样在虚拟机中正常工作
+
+
+================================================================================
+二、任务1-①：多场景微架构指标采集
+================================================================================
+
+【实验目标】
+使用 stress-ng 生成5种典型负载，用 perf stat 采集微架构指标
+
+【五类负载】
+1. int64      - 整数运算（ALU密集型）
+2. matrixprod - 矩阵乘法（浮点/SIMD密集型）
+3. read64     - 连续内存读取（访存密集型）
+4. rand-set   - 随机内存访问（TLB/Cache Miss密集型）
+5. queens     - N皇后问题（分支密集型）
+
+【采集命令】
+sudo perf stat -e kmem:mm_page_alloc,kmem:mm_page_free,\
+sched:sched_switch,sched:sched_wakeup,\
+raw_syscalls:sys_enter,raw_syscalls:sys_exit \
+stress-ng --cpu 1 --cpu-method int64 -t 30s
+
+【遇到的困难】
+1. 第一个perf stat脚本无法完整运行
+   - 原因：命令太长，换行符处理问题
+   - 解决：使用反斜杠续行，确保没有多余空格
+
+2. 硬件事件不可用
+   - 原因：VMware虚拟化限制
+   - 解决：改用tracepoint事件
+
+3. 文件权限问题
+   - 问题：sudo生成的文件普通用户无法读取
+   - 解决：使用sudo chmod修改权限
+
+【采集结果对比】
+
+| 场景 | 页分配 | 页释放 | 上下文切换 | 系统调用 | 用户态时间 | 内核态时间 |
+|------|--------|--------|-----------|---------|-----------|-----------|
+| int64 | 825 | 552 | 259 | 506 | 29.98s | 0.003s |
+| matrixprod | 1,017 | 548 | 293 | 506 | 29.98s | 0.010s |
+| read64 | 1,369 | 1,062 | 322 | 2,032 | 17.94s | 12.05s |
+| rand-set | 6,186,227 | 6,185,090 | 272 | 1,042 | 14.92s | 15.16s |
+| queens | 824 | 548 | 252 | 506 | 29.98s | 0.005s |
+
+【学到的新知识】
+1. tracepoint事件：
+   - kmem:mm_page_alloc：内存页分配
+   - kmem:mm_page_free：内存页释放
+   - sched:sched_switch：进程上下文切换
+   - raw_syscalls:sys_enter/exit：系统调用
+
+2. stress-ng负载特征：
+   - 计算密集型：用户态时间接近100%，系统调用少
+   - 访存密集型：内核态时间占比高，缺页异常多
+
+
+================================================================================
+三、任务1-②：火焰图生成与热点分析
+================================================================================
+
+【实验目标】
+对两种不同负载生成火焰图，对比分析热点差异
+
+【生成命令】
+# 矩阵乘法（计算密集型）
+sudo perf record -F 99 -g -- stress-ng --cpu 1 --cpu-method matrixprod -t 30s
+sudo perf script > matrixprod.script
+./FlameGraph/stackcollapse-perf.pl matrixprod.script | \
+./FlameGraph/flamegraph.pl --title="矩阵乘法火焰图" > matrixprod_flame.svg
+
+# 随机访存（访存密集型）
+sudo perf record -F 99 -g -- stress-ng --vm 1 --vm-bytes 512M --vm-method rand-set -t 30s
+sudo perf script > randmem.script
+./FlameGraph/stackcollapse-perf.pl randmem.script | \
+./FlameGraph/flamegraph.pl --title="随机访存火焰图" > randmem_flame.svg
+
+【遇到的困难】
+1. FlameGraph克隆权限问题
+   - 问题：git clone后FlameGraph目录权限不够
+   - 解决：使用sudo chown修改所有者
+
+2. perf.data文件权限
+   - 问题：sudo perf record生成的文件普通用户无法读取
+   - 解决：使用sudo chmod 644修改权限
+
+【火焰图对比分析】
+
+矩阵乘法（计算密集型）：
+- 形态：较扁平，热点分散
+- 主要函数：stress-ng主函数及计算相关函数
+- 内核态函数：极少
+- 说明：CPU时间主要在用户态执行计算
+
+随机访存（访存密集型）：
+- 形态：高而窄，热点集中（尖塔状）
+- 主要函数：exc_page_fault、handle_mm_fault、wp_page_copy
+- 内核态函数：大量
+- 说明：频繁缺页异常，性能瓶颈在内存子系统
+
+【学到的新知识】
+1. 火焰图解读：
+   - 尖塔状（高）→ 热点集中，瓶颈明确
+   - 扁平状（宽）→ 热点分散，资源利用率均匀
+
+2. 缺页异常处理链：
+   exc_page_fault → do_user_addr_fault → handle_mm_fault 
+   → handle_pte_fault → do_wp_page → wp_page_copy
+
+3. 系统调用入口：
+   entry_SYSCALL_64 → do_syscall_64 → 具体系统调用
+
+
+================================================================================
+四、GitHub仓库创建与代码推送
+================================================================================
+
+【步骤】
+1. 在GitHub网页创建仓库（Public）
+2. 本地git init
+3. git add . && git commit -m "..."
+4. git remote add origin https://github.com/Kujie-Hub/2026CVM-kaohe-ljj.git
+5. git push -u origin main
+
+【遇到的困难】
+1. Git身份配置
+   - 需要设置 user.name 和 user.email
+
+2. 远程仓库已存在
+   - 错误："error: 远程 origin 已经存在"
+   - 解决：已存在则忽略，直接push
+
+3. 密码认证失败
+   - 原因：GitHub已不支持密码认证
+   - 解决：使用Personal Access Token
+
+【仓库地址】
+https://github.com/Kujie-Hub/2026CVM-kaohe-ljj
+
+
+================================================================================
+五、与AI沟通的重要对话记录
+================================================================================
+
+【对话1：网络配置】
+用户：apt update报错Temporary failure resolving
+AI：提供DNS配置、VMware服务检查、静态IP配置等方法
+结果：配置静态IP 192.168.91.100/24解决
+
+【对话2：VMware Tools】
+用户：主机和虚拟机之间无法复制粘贴
+AI：安装open-vm-tools
+结果：安装后重启解决
+
+【对话3：perf权限】
+用户：perf stat显示<not supported>
+AI：说明VMware虚拟化限制，建议使用tracepoint事件
+结果：改用tracepoint事件成功采集
+
+【对话4：火焰图分析】
+用户：矩阵乘法火焰图更扁，随机访存火焰图更高
+AI：确认了用户的观察，修正了分析结论
+结果：正确理解尖塔状和扁平状火焰图的含义
+
+【对话5：Git推送】
+用户：git push需要密码
+AI：指导创建Personal Access Token
+结果：成功推送到GitHub
+
+
+================================================================================
+六、学习心得与总结
+================================================================================
+
+【收获】
+1. 掌握了Linux perf工具的使用：
+   - perf stat采集微架构指标
+   - perf record生成火焰图
+   - tracepoint事件的使用
+
+2. 理解了不同负载类型的性能特征：
+   - 计算密集型：用户态时间为主，系统调用少
+   - 访存密集型：内核态时间占比高，缺页异常多
+
+3. 学会了火焰图分析方法：
+   - 尖塔状 → 热点集中，瓶颈明确
+   - 扁平状 → 热点分散
+
+4. 掌握了Git与GitHub协作流程
+
+5. 了解了VMware虚拟化对perf的限制及替代方案
+
+【遇到的挑战】
+1. VMware网络配置（最耗时）
+2. perf在虚拟机中的限制
+3. 文件权限管理
+4. Git认证配置
