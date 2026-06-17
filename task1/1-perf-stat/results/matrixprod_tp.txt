@@ -1,0 +1,19 @@
+stress-ng: info:  [2060] setting to a 30 second run per stressor
+stress-ng: info:  [2060] dispatching hogs: 1 cpu
+stress-ng: info:  [2060] successful run completed in 30.00s
+
+ Performance counter stats for 'stress-ng --cpu 1 --cpu-method matrixprod -t 30s':
+
+             1,017      kmem:mm_page_alloc                                                    
+               548      kmem:mm_page_free                                                     
+               293      sched:sched_switch                                                    
+               275      sched:sched_wakeup                                                    
+               506      raw_syscalls:sys_enter                                                
+               506      raw_syscalls:sys_exit                                                 
+
+      30.006831968 seconds time elapsed
+
+      29.975404000 seconds user
+       0.009938000 seconds sys
+
+

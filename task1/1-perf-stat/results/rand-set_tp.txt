@@ -1,0 +1,19 @@
+stress-ng: info:  [2086] setting to a 30 second run per stressor
+stress-ng: info:  [2086] dispatching hogs: 1 vm
+stress-ng: info:  [2086] successful run completed in 30.10s
+
+ Performance counter stats for 'stress-ng --vm 1 --vm-bytes 512M --vm-method rand-set -t 30s':
+
+         6,186,227      kmem:mm_page_alloc                                                    
+         6,185,090      kmem:mm_page_free                                                     
+               272      sched:sched_switch                                                    
+               282      sched:sched_wakeup                                                    
+             1,042      raw_syscalls:sys_enter                                                
+             1,042      raw_syscalls:sys_exit                                                 
+
+      30.104444363 seconds time elapsed
+
+      14.923638000 seconds user
+      15.158719000 seconds sys
+
+

@@ -1,0 +1,19 @@
+stress-ng: info:  [2077] setting to a 30 second run per stressor
+stress-ng: info:  [2077] dispatching hogs: 1 vm
+stress-ng: info:  [2077] successful run completed in 30.00s
+
+ Performance counter stats for 'stress-ng --vm 1 --vm-bytes 1G --vm-method read64 --vm-keep -t 30s':
+
+             1,369      kmem:mm_page_alloc                                                    
+             1,062      kmem:mm_page_free                                                     
+               322      sched:sched_switch                                                    
+               313      sched:sched_wakeup                                                    
+             2,032      raw_syscalls:sys_enter                                                
+             2,032      raw_syscalls:sys_exit                                                 
+
+      30.007832752 seconds time elapsed
+
+      17.942373000 seconds user
+      12.045456000 seconds sys
+
+

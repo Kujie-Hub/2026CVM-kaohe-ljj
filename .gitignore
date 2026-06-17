@@ -1,0 +1,5 @@
+*.data
+*.script
+*.old
+.DS_Store
+thumbs.db

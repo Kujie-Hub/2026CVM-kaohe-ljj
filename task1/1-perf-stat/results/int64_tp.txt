@@ -1,0 +1,19 @@
+stress-ng: info:  [2052] setting to a 30 second run per stressor
+stress-ng: info:  [2052] dispatching hogs: 1 cpu
+stress-ng: info:  [2052] successful run completed in 30.00s
+
+ Performance counter stats for 'stress-ng --cpu 1 --cpu-method int64 -t 30s':
+
+               825      kmem:mm_page_alloc                                                    
+               552      kmem:mm_page_free                                                     
+               259      sched:sched_switch                                                    
+               262      sched:sched_wakeup                                                    
+               506      raw_syscalls:sys_enter                                                
+               506      raw_syscalls:sys_exit                                                 
+
+      30.006858100 seconds time elapsed
+
+      29.983622000 seconds user
+       0.003276000 seconds sys
+
+

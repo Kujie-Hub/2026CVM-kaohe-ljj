@@ -1,0 +1,29 @@
+stress-ng: info:  [1971] setting to a 30 second run per stressor
+stress-ng: info:  [1971] dispatching hogs: 1 cpu
+stress-ng: info:  [1971] successful run completed in 30.00s
+
+ Performance counter stats for 'stress-ng --cpu 1 --cpu-method queens -t 30s':
+
+   <not supported>      cycles                                                                
+   <not supported>      instructions                                                          
+   <not supported>      cache-references                                                      
+   <not supported>      cache-misses                                                          
+                 0      cpu_atom/L1-dcache-load-misses/                                         (66.67%)
+                 0      cpu_core/L1-dcache-load-misses/                                         (66.69%)
+                 0      cpu_atom/L1-icache-load-misses/                                         (66.68%)
+                 0      cpu_core/L1-icache-load-misses/                                         (66.63%)
+   <not supported>      cpu_atom/LLC-load-misses/                                             
+   <not supported>      cpu_core/LLC-load-misses/                                             
+   <not supported>      branch-instructions                                                   
+   <not supported>      branch-misses                                                         
+                 0      cpu_atom/dTLB-load-misses/                                              (66.65%)
+                 0      cpu_core/dTLB-load-misses/                                              (66.68%)
+               251      context-switches                                                      
+                 0      cpu-migrations                                                        
+
+      30.008711328 seconds time elapsed
+
+      29.969800000 seconds user
+       0.007465000 seconds sys
+
+
