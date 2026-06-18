@@ -1,0 +1,24 @@
+分配 32 MB 内存...
+初始化数组...
+
+============================================================
+步长(字节) | 平均访问时间(ns) | 相对性能
+============================================================
+   1         |           0.33       | 1.00x
+============================================================
+
+提示: 在 stride=64 附近应该出现性能拐点(Cache Line边界)
+因为典型x86_64 CPU的Cache Line大小为64字节
+
+ Performance counter stats for './src/cache_line_test 1':
+
+          1,767.66 msec cpu-clock                        #    0.999 CPUs utilized             
+          1,767.66 msec task-clock                       #    0.999 CPUs utilized             
+             8,257      page-faults                      #    4.671 K/sec                     
+
+       1.768581849 seconds time elapsed
+
+       1.758004000 seconds user
+       0.010005000 seconds sys
+
+
