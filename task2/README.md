@@ -113,7 +113,7 @@ docker run --privileged -d \
 
 > **注意**：必须使用 `--privileged` 模式，因为 `perf` 需要访问宿主机内核的 PMU（Performance Monitoring Unit）。
 
-### 3. 验证运行状态
+### 3. 访问前端和验证运行状态
 
 ```bash
 # 查看日志
@@ -121,7 +121,12 @@ docker logs -f profiler
 
 # 健康检查
 curl http://localhost:8080/api/health
+
+# 打开 Web 前端
+# 在浏览器中访问：
+# http://localhost:8080/
 ```
+
 
 ### 4. 环境变量（可选覆盖）
 
