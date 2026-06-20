@@ -89,7 +89,13 @@ perf record (持续采集)
 
 ## 快速启动命令
 
-### 1. 加载 Docker 镜像
+### 1. 构建 Docker 镜像
+
+```bash
+docker build -t profiler:latest .
+```
+
+如果你已经有 `profiler.tar`，也可以使用预打包镜像：
 
 ```bash
 docker load -i profiler.tar
