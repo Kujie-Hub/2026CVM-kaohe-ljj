@@ -12,8 +12,6 @@ gcc -O2 -o cache_line_test cache_line_test.c -lm
 ### 测试指定步长用于perf采集
 ./cache_line_test 64
 
-### perf stat采集所有步长
-for stride in 1 2 4 8 16 32 64 128 256; do sudo perf stat -e cpu-clock,task-clock,page-faults ./src/cache_line_test $stride 2>&1 | tee results/stride_${stride}.txt; done
 
 ### 生成火焰图stride=1
 sudo perf record -F 99 -g -- ./src/cache_line_test 1
@@ -25,14 +23,14 @@ sudo perf record -F 99 -g -- ./src/cache_line_test 64
 sudo perf script > stride64.script
 ~/FlameGraph/stackcollapse-perf.pl stride64.script | ~/FlameGraph/flamegraph.pl --title="stride=64火焰图" > flamegraphs/stride64_flame.svg
 
-## 结果文件
-src/cache_line_test.c 源代码
-results/stride_*.txt 各步长perf stat输出
-flamegraphs/stride1_flame.svg stride=1火焰图
-flamegraphs/stride64_flame.svg stride=64火焰图
-report.md 曲线图加拐点分析加AI使用记录
-ai-chat-log/ai_record.md AI辅助编程记录
-cache_performance_optimized.png 步长vs性能曲线图
+### 结果文件
+- `src/cache_line_test.c`：源代码
+- `results/stride_*.txt`：各步长 `perf stat` 输出（请保留完整原始输出文件）
+- `flamegraphs/stride1_flame.svg`：stride=1 火焰图
+- `flamegraphs/stride64_flame.svg`：stride=64 火焰图
+- `report.md`：步长 vs 性能曲线、拐点分析与 AI 使用记录
+- `ai-chat-log/ai_record.md`：AI 辅助编程对话记录
+- `cache_performance_optimized.png`：步长 vs 性能曲线图
 
 ## 测试结果
 步长 平均访问时间ns 相对性能

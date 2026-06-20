@@ -32,10 +32,15 @@
     └── test/
 
 ## 说明
-- `task1` 为本次实验的核心作业内容，已完成 3 个子任务。
-- `task2` 为题目2的容器化持续 CPU Profiling 工具开发，目录已包含源码与 Dockerfile，可直接构建运行。
-- 若要运行 `task2`，请进入 `task2/` 目录并执行：
+- `task1` 为本次实验的核心作业内容，已完成 3 个子任务，结果与报告存放在各子目录下。
+- `task2` 为题目2的容器化持续 CPU Profiling 工具开发，目录包含源码、`Dockerfile` 与测试脚本。
+
+运行与注意事项：
+- 若要构建并运行 `task2` 容器（需宿主机支持 `perf` 与相应 `linux-tools`）：
   ```bash
+  cd task2
   docker build -t profiler:latest .
+  # 运行需使用 --privileged 模式并映射数据目录以持久化采样文件
   docker run --privileged -d --name profiler -p 8080:8080 -v /data/profiler:/data profiler:latest
   ```
+- 注意：容器持续采样依赖宿主机的 PMU，虚拟化环境（如 VMware）可能限制硬件事件访问，实际使用时请确保宿主机内核安装并匹配 `linux-tools`，并以 `--privileged` 启动。
